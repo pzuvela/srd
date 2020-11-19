@@ -4,10 +4,13 @@ Sum of Ranking Differences -- Python Implementation
 Validated by comparison of ranks with random numbers (CRNN)
 
 Requirements:
+
     1) NumPy
+
     2) SciPy
 
 References:
+
     1) Heberger, K. Sum of ranking differences compares methods or models fairly. TRAC 2010, 29, 101-109.
         (doi:10.1016/j.trac.2009.09.009)
         
