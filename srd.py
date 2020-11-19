@@ -18,11 +18,6 @@ References:
         (doi:10.1016/j.aca.2014.12.056)
 """
 
-# TODO: Comment the code
-# TODO: Add histogram & bar plotting
-# TODO: Add cross-validation
-
-
 # Import stuff from numpy, scipy & itertools packages
 from numpy import min as np_min
 from numpy import max as np_max
