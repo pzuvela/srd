@@ -25,32 +25,40 @@ from numpy import mean, median, size, ndarray, argsort, argwhere, arange, multip
 from scipy.stats import mode
 from numpy.random import permutation
 from itertools import permutations as perms
+from typing import Dict, Union
+
+from common import GoldenStandards
 
 
 class SumOfRankingDiffs:
 
-    def __init__(self, a, t='mean'):
+    def __init__(self, a: ndarray, t: Union[GoldenStandards, ndarray] = GoldenStandards.Mean):
 
         """
         :param a: ndarray
-        :param t: ndarray, string (default, 'mean')
+        :param t: Union[GoldenStandards, ndarray] (default, GoldenStandards.Mean)
         """
 
         # Define input matrix
-        self.A = a  # Matrix A [columns: models, methods; rows: samples]
+        self.A: ndarray = a  # Matrix A [columns: models, methods; rows: samples]
 
         """ Define targets """
         # Dictionary of "gold standards"
-        self.gold_std_dict = {'mean': mean, 'median': median, 'mode': mode, 'min': np_min, 'max': np_max}
+        self.gold_std_dict: Dict[GoldenStandards] = \
+            {GoldenStandards.Mean: mean, GoldenStandards.Median: median, GoldenStandards.Mode: mode,
+             GoldenStandards.Min: np_min, GoldenStandards.Max: np_max}
 
         # If target is a string, apply the function/attribute from the dictionary; else: use the input t as is
-        if isinstance(t, str):
+        self.T: ndarray
+        if isinstance(t, GoldenStandards):
             self.T = self.gold_std_dict[t](a, axis=0)  # Target T [default: mean of A]
         else:
             assert isinstance(t, ndarray), '# If target is not a string or None, it must be an ndarray !'
             self.T = t
 
         # Define size of A
+        self.nrows: float
+        self.ncols: float
         self.nrows, self.ncols = size(self.A, axis=0), size(self.A, axis=1)
 
         # Define srd (raw), srd (normalized), maximum srd, srd (random), srd (random, normalized)
