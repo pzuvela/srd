@@ -1,3 +1,5 @@
-from .srd import SumOfRankingDiffs
+from .srd import SumOfRankingDifferences
 
-__all__ = ["SumOfRankingDiffs"]
+__all__ = [
+    "SumOfRankingDifferences"
+]

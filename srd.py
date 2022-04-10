@@ -18,19 +18,23 @@ References:
         (doi:10.1016/j.aca.2014.12.056)
 """
 
-# Import stuff from numpy, scipy & itertools packages
-from numpy import min as np_min
-from numpy import max as np_max
-from numpy import mean, median, size, ndarray, argsort, argwhere, arange, multiply, zeros, array, hstack
-from scipy.stats import mode
+from typing import (
+    Any,
+    Dict,
+    Union
+)
+from itertools import permutations
+
+import numpy as np
+from numpy import ndarray
 from numpy.random import permutation
-from itertools import permutations as perms
-from typing import Dict, Union
+from scipy.stats import mode
+
 
 from common import GoldenStandards
 
 
-class SumOfRankingDiffs:
+class SumOfRankingDifferences:
 
     def __init__(self, a: ndarray, t: Union[GoldenStandards, ndarray] = GoldenStandards.Mean):
 
@@ -44,9 +48,12 @@ class SumOfRankingDiffs:
 
         """ Define targets """
         # Dictionary of "gold standards"
-        self.gold_std_dict: Dict[GoldenStandards] = \
-            {GoldenStandards.Mean: mean, GoldenStandards.Median: median, GoldenStandards.Mode: mode,
-             GoldenStandards.Min: np_min, GoldenStandards.Max: np_max}
+        self.gold_std_dict: Dict[GoldenStandards, Any] = {
+            GoldenStandards.Mean: np.mean,
+            GoldenStandards.Median: np.median, GoldenStandards.Mode: mode,
+            GoldenStandards.Min: np.min,
+            GoldenStandards.Max: np.max
+        }
 
         # If target is a string, apply the function/attribute from the dictionary; else: use the input t as is
         self.T: ndarray
@@ -59,7 +66,7 @@ class SumOfRankingDiffs:
         # Define size of A
         self.nrows: float
         self.ncols: float
-        self.nrows, self.ncols = size(self.A, axis=0), size(self.A, axis=1)
+        self.nrows, self.ncols = np.size(self.A, axis=0), np.size(self.A, axis=1)
 
         # Define srd (raw), srd (normalized), maximum srd, srd (random), srd (random, normalized)
         self.srd, self.srd_norm, self.srd_max, self.srd_rnd, self.srd_rnd_norm = [ndarray([])] * 5
@@ -67,13 +74,13 @@ class SumOfRankingDiffs:
     def compute_srd(self):
 
         # Define T & A indices, and initialize the rank of A
-        t_index, a_index, a_ranking = argsort(self.T), argsort(self.A, axis=0), zeros((self.nrows, self.ncols))
+        t_index, a_index, a_ranking = np.argsort(self.T), np.argsort(self.A, axis=0), np.zeros((self.nrows, self.ncols))
 
         for i in range(self.nrows):
-            row = argwhere(a_index == t_index[i])
+            row = np.argwhere(a_index == t_index[i])
             a_ranking[i, :] = row[:, 0].T
 
-        ideal_rank = arange(self.nrows).reshape(-1, 1)
+        ideal_rank = np.arange(self.nrows).reshape(-1, 1)
         self.srd = sum(abs(a_ranking - ideal_rank))
 
         return self
@@ -109,7 +116,7 @@ class SumOfRankingDiffs:
         :param srd_max: int
         :return: ndarray
         """
-        return multiply(srd_vals, 100 / srd_max)
+        return np.multiply(srd_vals, 100 / srd_max)
 
     @staticmethod
     def _srd_val_restrict(nrows, exact, exact_lim=10, n_rnd_vals=10000):
@@ -136,20 +143,23 @@ class SumOfRankingDiffs:
         :return: self
         """
 
-        # Assertion to make sure that SRD is ran before validation !
+        # Assertion to make sure that SRD is run before validation !
         assert self.srd.size > 0, '# You must run the SRD method before validation !'
-        # Assertion to make sure that exact is a boolean !
+        # Assertion to make sure that exact is boolean !
         assert isinstance(exact, bool), '# The argument \"exact\" has to be a boolean !'  # Bug fix
 
         # Input arguments
         exact, exact_lim, n_rnd_vals = self._srd_val_restrict(self.nrows, exact, **kwargs)
 
         # Ideal ranking
-        ideal_rank = arange(self.nrows).reshape(-1, 1)
+        ideal_rank = np.arange(self.nrows).reshape(-1, 1)
 
         # Compute SRD values for "n_rand_vals" random numbers
-        rnd_order = hstack([permutation(self.nrows).reshape(-1, 1) for _ in range(n_rnd_vals)]) if not exact else \
-            array(list(perms(range(self.nrows)))).T
+        rnd_order: ndarray
+        if not exact:
+            rnd_order = np.hstack([permutation(self.nrows).reshape(-1, 1) for _ in range(n_rnd_vals)])
+        else:
+            rnd_order = np.array(list(permutations(range(self.nrows)))).T
         srd_rnd = sum(abs(rnd_order - ideal_rank))
         srd_rnd_norm = self._srd_val_normalize(srd_vals=srd_rnd, srd_max=self._srd_max().srd_max)
 
